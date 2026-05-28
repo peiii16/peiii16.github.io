@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园电瓶车互通交易平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sjtu: '#0066CC',     // 上海交大蓝色
+                        ecnu: '#7B1FA2',     // 华东师大紫色
+                        neutral: '#F5F5F5',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .bg-blur {
+                backdrop-filter: blur(8px);
+            }
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800 overflow-x-hidden">
+    <!-- 导航栏 - 所有页面共用 -->
+    <header id="mainNav" class="fixed w-full top-0 z-50 transition-all duration-300 bg-transparent">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo区域 -->
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-sjtu to-ecnu flex items-center justify-center">
+                    <i class="fa fa-bicycle text-white text-xl"></i>
+                </div>
+                <span class="text-xl font-bold text-white text-shadow">车互通</span>
+            </div>
+            
+            <!-- 导航链接 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#home" class="text-white hover:text-gray-100 transition-colors">首页</a>
+                <a href="#how-it-works" class="text-white hover:text-gray-100 transition-colors">如何使用</a>
+                <a href="#buy" class="text-white hover:text-gray-100 transition-colors">买家入口</a>
+                <a href="#sell" class="text-white hover:text-gray-100 transition-colors">卖家入口</a>
+            </nav>
+            
+            <!-- 登录按钮 -->
+            <button id="loginBtn" class="bg-white text-sjtu hover:bg-gray-100 px-5 py-2 rounded-full font-medium transition-all shadow-md hover:shadow-lg">
+                登录 / 注册
+            </button>
+        </div>
+    </header>
+
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl w-full max-w-md p-8 shadow-2xl transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">校园身份验证</h2>
+                <button id="closeLoginModal" class="text-gray-500 hover:text-gray-700 text-xl">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择学校</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="relative">
+                            <input type="radio" id="school-sjtu" name="school" value="sjtu" class="peer sr-only" checked>
+                            <label for="school-sjtu" class="block border-2 border-gray-200 peer-checked:border-sjtu rounded-lg p-4 text-center cursor-pointer transition-all hover:border-gray-300">
+                                <span class="font-medium">上海交通大学</span>
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" id="school-ecnu" name="school" value="ecnu" class="peer sr-only">
+                            <label for="school-ecnu" class="block border-2 border-gray-200 peer-checked:border-ecnu rounded-lg p-4 text-center cursor-pointer transition-all hover:border-gray-300">
+                                <span class="font-medium">华东师范大学</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">校内邮箱</label>
+                    <div class="flex">
+                        <input type="text" id="emailPrefix" placeholder="用户名" class="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-sjtu">
+                        <span id="emailSuffix" class="bg-gray-100 px-4 py-3 border border-l-0 border-gray-300 rounded-r-lg text-gray-600">@sjtu.edu.cn</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">验证码</label>
+                    <div class="flex space-x-3">
+                        <input type="text" placeholder="输入验证码" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sjtu">
+                        <button type="button" class="bg-gray-100 hover:bg-gray-200 px-4 py-3 rounded-lg text-gray-700 transition-colors">
+                            获取验证码
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-gradient-to-r from-sjtu to-ecnu hover:opacity-90 text-white py-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl">
+                    验证并登录
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 1. 封面页 -->
+    <section id="home" class="min-h-screen flex items-center relative overflow-hidden">
+        <!-- 背景图 -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://picsum.photos/id/1059/1920/1080" alt="校园背景" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-r from-sjtu/80 to-ecnu/80"></div>
+        </div>
+        
+        <!-- 内容 -->
+        <div class="container mx-auto px-4 py-20 relative z-10">
+            <div class="max-w-2xl">
+                <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-white leading-tight mb-6">
+                    校园电瓶车<br>互通交易平台
+                </h1>
+                <p class="text-[clamp(1rem,2vw,1.25rem)] text-gray-100 mb-8 max-w-xl">
+                    专为上海交大与华东师大师生打造，解决校内牌照绑定限制，实现跨校安全交易，让闲置车辆发挥最大价值。
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#how-it-works" class="bg-white text-sjtu hover:bg-gray-100 px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl">
+                        了解更多
+                    </a>
+                    <a href="#buy" class="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-3 rounded-full font-medium transition-all">
+                        立即开始 <i class="fa fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 学校标识 -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex items-center space-x-10">
+            <div class="text-center">
+                <img src="https://picsum.photos/id/180/100/100" alt="上海交大" class="w-16 h-16 mx-auto rounded-full mb-2 object-cover border-2 border-white">
+                <span class="text-white font-medium">上海交通大学</span>
+            </div>
+            <div class="text-white text-2xl">
+                <i class="fa fa-exchange"></i>
+            </div>
+            <div class="text-center">
+                <img src="https://picsum.photos/id/200/100/100" alt="华东师大" class="w-16 h-16 mx-auto rounded-full mb-2 object-cover border-2 border-white">
+                <span class="text-white font-medium">华东师范大学</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. 如何使用 -->
+    <section id="how-it-works" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">如何使用平台</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">简单四步，轻松完成跨校电瓶车交易，解决校内牌照限制问题</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- 步骤1 -->
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all text-center">
+                    <div class="w-16 h-16 bg-sjtu/10 text-sjtu rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">1</div>
+                    <h3 class="text-xl font-semibold mb-3">校内身份验证</h3>
+                    <p class="text-gray-600">使用学校邮箱（sjtu.edu.cn / ecnu.edu.cn）注册并验证身份</p>
+                </div>
+                
+                <!-- 步骤2 -->
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all text-center">
+                    <div class="w-16 h-16 bg-sjtu/10 text-sjtu rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">2</div>
+                    <h3 class="text-xl font-semibold mb-3">发布/浏览信息</h3>
+                    <p class="text-gray-600">卖家发布车辆信息，买家浏览符合需求的电瓶车</p>
+                </div>
+                
+                <!-- 步骤3 -->
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all text-center">
+                    <div class="w-16 h-16 bg-sjtu/10 text-sjtu rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">3</div>
+                    <h3 class="text-xl font-semibold mb-3">线下看车交易</h3>
+                    <p class="text-gray-600">联系对方约定时间地点，现场验车确认车况</p>
+                </div>
+                
+                <!-- 步骤4 -->
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all text-center">
+                    <div class="w-16 h-16 bg-sjtu/10 text-sjtu rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">4</div>
+                    <h3 class="text-xl font-semibold mb-3">完成交易</h3>
+                    <p class="text-gray-600">安全交易完成，平台记录交易信息保障双方权益</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 买家页面 -->
+    <section id="buy" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">买家中心</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">浏览来自合作高校的电瓶车信息，找到合适的车辆</p>
+            </div>
+            
+            <!-- 筛选区域 -->
+            <div class="bg-gray-50 rounded-xl p-6 mb-10 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">价格范围</label>
+                        <div class="flex space-x-3">
+                            <input type="number" placeholder="最低" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sjtu">
+                            <span class="flex items-center text-gray-500">-</span>
+                            <input type="number" placeholder="最高" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sjtu">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">牌照类型</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sjtu">
+                            <option value="all">全部类型</option>
+                            <option value="sh">有上海市牌照</option>
+                            <option value="school">有校内牌照</option>
+                            <option value="none">无牌照</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">车辆成色</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sjtu">
+                            <option value="all">全部成色</option>
+                            <option value="new">9成新以上</option>
+                            <option value="medium">7-9成新</option>
+                            <option value="old">7成新以下</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button class="bg-sjtu hover:bg-sjtu/90 text-white px-6 py-2 rounded-lg font-medium transition-all">
+                        <i class="fa fa-filter mr-2"></i> 应用筛选
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 车辆列表 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- 车辆1 -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all border border-gray-100">
+                    <div class="relative">
+                        <img src="https://picsum.photos/id/1071/600/400" alt="电瓶车图片" class="w-full h-52 object-cover">
+                        <span class="absolute top-4 right-4 bg-ecnu text-white text-sm px-3 py-1 rounded-full">华东师大</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-semibold">小牛电动 NQi</h3>
+                            <span class="text-sjtu font-bold text-xl">¥2,800</span>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">
+                                <i class="fa fa-check-circle mr-1"></i>有沪牌
+                            </span>
+                            <span class="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full">
+                                <i class="fa fa-times
